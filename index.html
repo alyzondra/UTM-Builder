@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<!-- Default theme -->
+<html lang="en" data-theme="light"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced UTM Builder</title>
+    <style>
+        :root {
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+            /* Light Theme */
+            --highlight-primary-light: #23D57C;
+            --highlight-secondary-light: #CAF6E0;
+            --bg-color-light: #ffffff;
+            --text-color-light: #1a1a1a;
+            --subtle-text-color-light: #555;
+            --border-color-light: #e0e0e0;
+            --input-bg-light: #f9f9f9;
+            --grid-color-light: rgba(0, 0, 0, 0.05);
+            --button-text-light: #ffffff;
+            --button-secondary-bg-light: #6c757d;
+            --notification-text-light: #121212; /* Dark text on bright green */
+
+
+             /* Dark Theme */
+            --highlight-primary-dark: #23D57C;
+            --highlight-secondary-dark: #1a4d3a; /* Darker accent */
+            --bg-color-dark: #121212;
+            --text-color-dark: #e0e0e0;
+            --subtle-text-color-dark: #aaa;
+            --border-color-dark: #333333;
+            --input-bg-dark: #2a2a2a;
+            --grid-color-dark: rgba(255, 255, 255, 0.07);
+            --button-text-dark: #121212; /* Dark text on bright button */
+            --button-secondary-bg-dark: #4a4a4a;
+            --notification-text-dark: #121212; /* Dark text on bright green */
+        }
+
+        /* Apply theme variables */
+        body {
+            font-family: var(--font-sans);
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            background-image:
+                linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px; /* Grid size */
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden; /* Prevent horizontal scrollbar during animations */
+        }
+
+        /* Set variables based on theme attribute */
+        [data-theme="light"] {
+            --bg-color: var(--bg-color-light);
+            --text-color: var(--text-color-light);
+            --subtle-text-color: var(--subtle-text-color-light);
+            --border-color: var(--border-color-light);
+            --input-bg: var(--input-bg-light);
+            --grid-color: var(--grid-color-light);
+            --highlight-primary: var(--highlight-primary-light);
+            --highlight-secondary: var(--highlight-secondary-light);
+            --button-text: var(--button-text-light);
+            --button-secondary-bg: var(--button-secondary-bg-light);
+            --notification-text: var(--notification-text-light);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: var(--bg-color-dark);
+            --text-color: var(--text-color-dark);
+            --subtle-text-color: var(--subtle-text-color-dark);
+            --border-color: var(--border-color-dark);
+            --input-bg: var(--input-bg-dark);
+            --grid-color: var(--grid-color-dark);
+            --highlight-primary: var(--highlight-primary-dark);
+            --highlight-secondary: var(--highlight-secondary-dark);
+            --button-text: var(--button-text-dark);
+            --button-secondary-bg: var(--button-secondary-bg-dark);
+            --notification-text: var(--notification-text-dark);
+        }
+
+
+        /* --- Layout & General --- */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px 80px 20px; /* Added bottom padding */
+        }
+
+        .main-title {
+             /* Oversized Title */
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            margin-bottom: 40px;
+            line-height: 1.1;
+            color: var(--highlight-primary); /* Highlight color for title */
+            text-align: center;
+        }
+
+        h2 {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            margin-top: 40px; /* Added margin top */
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* --- Theme Toggle --- */
+         #themeToggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 0.8rem;
+         }
+         #themeToggle:hover {
+            opacity: 0.8;
+         }
+
+        /* --- Form Styling --- */
+        #urlForm {
+            background-color: var(--bg-color); /* Ensure form bg matches body in case of layering */
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .form-section {
+             margin-bottom: 25px;
+             /* Animation base state */
+             opacity: 0;
+             transform: translateY(20px);
+             transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+         .form-section.is-visible {
+             opacity: 1;
+             transform: translateY(0);
+         }
+         /* Stagger animation delays */
+         .form-section:nth-child(1) { transition-delay: 0.1s; }
+         .form-section:nth-child(2) { transition-delay: 0.15s; }
+         .form-section:nth-child(3) { transition-delay: 0.2s; }
+         .form-section:nth-child(4) { transition-delay: 0.25s; }
+         .form-section:nth-child(5) { transition-delay: 0.3s; }
+         .form-section:nth-child(6) { transition-delay: 0.35s; } /* Buttons */
+
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--subtle-text-color);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box; /* Include padding and border in element's total width */
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--highlight-primary);
+            box-shadow: 0 0 0 2px var(--highlight-secondary);
+        }
+
+        /* Flexbox for Medium Inputs */
+        .channel-inputs {
+            display: flex; /* Makes the inputs align horizontally */
+            gap: 15px;     /* Adds 15px space *between* the inputs */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .channel-inputs input {
+            flex: 1; /* Allows each input to grow and shrink */
+            min-width: 150px; /* Prevent inputs from becoming too narrow before wrapping */
+            /* Reset conflicting styles if any */
+            width: auto;
+            margin-right: 0;
+            display: block;
+        }
+
+
+        /* --- Buttons --- */
+        .buttons { margin-top: 20px; }
+
+        button {
+            padding: 12px 25px;
+            margin-right: 10px;
+            margin-bottom: 10px; /* Add space if buttons wrap */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+        button:active {
+            transform: translateY(0px);
+            opacity: 1;
+        }
+        button:disabled {
+             opacity: 0.7;
+             cursor: default;
+             transform: none;
+        }
+
+        /* Main Action Button - Oversized Font */
+        button[type="submit"] {
+            background-color: var(--highlight-primary);
+            color: var(--button-text);
+            font-size: 1.2rem; /* Oversized text */
+            padding: 15px 35px; /* Larger padding */
+        }
+
+        #clearBtn {
+            background-color: var(--button-secondary-bg);
+            color: #ffffff;
+        }
+
+        /* --- Results Section --- */
+         #results-container {
+             margin-top: 40px;
+             /* Animation base state */
+             opacity: 0;
+             transform: translateY(30px);
+             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+             transition-delay: 0.4s; /* Delay results animation slightly */
+         }
+          #results-container.is-visible {
+             opacity: 1;
+             transform: translateY(0);
+         }
+
+        .result-item {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping within item on small screens */
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: var(--input-bg); /* Subtle background */
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            gap: 10px; /* Spacing between items inside */
+        }
+        .result-item span:first-child { /* Channel Name (using Medium value) */
+            min-width: 80px; /* Ensure some minimum width */
+            font-weight: 600;
+            flex-shrink: 0; /* Prevent shrinking */
+            color: var(--highlight-primary); /* Highlight channel */
+            text-align: right; /* Align label text right for consistency */
+            padding-right: 5px;
+        }
+        .result-url {
+            flex-grow: 1; /* Take up remaining space */
+            /* margin: 0 10px; Remove margin, use gap */
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color); /* Match page bg */
+            color: var(--text-color);
+            font-size: 0.9rem;
+            border-radius: 4px;
+            overflow-x: auto; /* Allow scrolling if URL is very long */
+            min-width: 200px; /* Prevent it getting too small */
+        }
+        .result-item button { /* Copy Button */
+            padding: 8px 15px;
+            background-color: var(--highlight-primary);
+            color: var(--button-text);
+            font-size: 0.9rem;
+            min-width: 70px;
+            flex-shrink: 0;
+            margin: 0; /* Remove default button margins */
+        }
+
+
+        #copyAllBtn {
+            background-color: var(--highlight-secondary);
+            color: var(--text-color);
+            margin-top: 20px;
+            display: none; /* Initially hidden */
+            padding: 12px 25px;
+            font-size: 1rem;
+        }
+         [data-theme="dark"] #copyAllBtn {
+             color: #ffffff;
+             background-color: var(--highlight-secondary-dark);
+         }
+
+        /* --- Notification Card Styles --- */
+        .notification-card {
+            position: fixed; /* Stay in viewport */
+            bottom: 30px;    /* Position from bottom */
+            left: 50%;       /* Center horizontally */
+            transform: translateX(-50%); /* Adjust for centering */
+            background-color: var(--highlight-primary);
+            color: var(--notification-text); /* Use variable for text color */
+            padding: 12px 25px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000; /* Ensure it's on top */
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0; /* Initially hidden */
+            visibility: hidden; /* Initially hidden & non-interactive */
+            transition: opacity 0.4s ease, visibility 0.4s ease, bottom 0.4s ease; /* Smooth fade */
+        }
+
+        .notification-card.show {
+            opacity: 1;
+            visibility: visible;
+            bottom: 50px; /* Slide up slightly */
+        }
+
+    </style>
+</head>
+<body>
+
+<button id="themeToggle">Toggle Theme</button>
+
+<div class="container">
+
+    <h1 class="main-title" data-animate>UTM<br>Link Builder</h1>
+    <div style="
+        width: 150px;
+        height: 150px;
+        overflow: hidden;
+        border-radius: 100%;
+        margin: auto;
+        margin-block-end: 40px;"
+        >
+        <img 
+            src="frog-braces.jpeg" 
+            style="margin: -40px 0px 0px -30px;"
+            />
+    </div>
+    
+    <form id="urlForm">
+        <div class="form-section" data-animate>
+            <label for="baseUrl">Base URL:*</label>
+            <input type="text" id="baseUrl" placeholder="https://example.com" required>
+        </div>
+        <div class="form-section" data-animate>
+            <label for="campaignSource">Campaign Source:</label>
+            <input type="text" id="campaignSource" placeholder="e.g., newsletter, social">
+        </div>
+        <div class="form-section" data-animate>
+            <label>Campaign Medium (per channel):</label>
+            <div class="channel-inputs">
+                <input type="text" id="twitterMedium" placeholder="Twitter Medium" value="twitter">
+                <input type="text" id="linkedinMedium" placeholder="LinkedIn Medium" value="linkedin">
+                <input type="text" id="discordMedium" placeholder="Discord Medium" value="discord">
+            </div>
+        </div>
+        <div class="form-section" data-animate>
+            <label for="campaignName">Campaign Name:</label>
+            <input type="text" id="campaignName" placeholder="e.g., summer_promo_2024">
+        </div>
+        <div class="form-section" data-animate>
+            <label for="campaignContent">Campaign Content:</label>
+            <input type="text" id="campaignContent" placeholder="e.g., top_banner_ad, footer_link">
+        </div>
+        <div class="buttons form-section" data-animate>
+            <button type="submit">Build URLs</button>
+            <button type="button" id="clearBtn">Clear</button>
+        </div>
+    </form>
+
+    <!-- Wrap results for animation -->
+    <div id="results-container" data-animate>
+        <h2 id="results-header" style="display: none;">Generated URLs</h2>
+        <div id="results">
+            <!-- Generated URLs will appear here -->
+        </div>
+        <button id="copyAllBtn" style="display:none;">Copy All URLs</button>
+    </div>
+
+</div> <!-- End Container -->
+
+<!-- Notification Card HTML -->
+<div id="copyNotification" class="notification-card">
+    URL Copied 🫡
+</div>
+
+<script>
+    // --- DOM Elements ---
+    const urlForm = document.getElementById('urlForm');
+    const clearBtn = document.getElementById('clearBtn');
+    const resultsDiv = document.getElementById('results');
+    const resultsContainer = document.getElementById('results-container');
+    const resultsHeader = document.getElementById('results-header');
+    const copyAllBtn = document.getElementById('copyAllBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlElement = document.documentElement;
+    const copyNotification = document.getElementById('copyNotification'); // Get notification element
+
+    const baseUrlInput = document.getElementById('baseUrl');
+    const campaignSourceInput = document.getElementById('campaignSource');
+    const campaignNameInput = document.getElementById('campaignName');
+    const campaignContentInput = document.getElementById('campaignContent');
+
+    // Note: We don't strictly need this object anymore for the labels,
+    // but it's useful for iterating through the inputs.
+    // The keys ("Twitter", "LinkedIn") are no longer used for display labels.
+    const channelMediumInputs = {
+        Twitter: document.getElementById('twitterMedium'),
+        LinkedIn: document.getElementById('linkedinMedium'),
+        Discord: document.getElementById('discordMedium')
+    };
+
+    // --- Variables ---
+    let notificationTimeout; // Variable to hold the timeout ID
+
+    // --- Functions ---
+
+    // Theme Handling
+    function applyTheme(theme) {
+        htmlElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        themeToggle.textContent = theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+    }
+
+    // Show Copy Notification
+    function showCopyNotification() {
+        clearTimeout(notificationTimeout); // Clear existing timeout
+        copyNotification.classList.add('show'); // Show notification
+        notificationTimeout = setTimeout(() => {
+            copyNotification.classList.remove('show'); // Hide after duration
+        }, 2500); // Show for 2.5 seconds
+    }
+
+    // Copy Single URL
+    function copySingleUrl(button) {
+        const urlToCopy = button.dataset.url;
+        if (!urlToCopy) return;
+
+        navigator.clipboard.writeText(urlToCopy)
+            .then(() => {
+                showCopyNotification(); // Show feedback
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.disabled = true;
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Failed to copy URL: ', err);
+                alert('Failed to copy URL automatically. Please select and copy manually.');
+            });
+    }
+
+     // Utility to Escape HTML
+     function escapeHTML(str) {
+        if (typeof str !== 'string') return ''; // Handle non-string input gracefully
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+     }
+
+    // --- Event Listeners and Initial Setup ---
+
+    // Theme Toggle Listener
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+    });
+
+    // Apply saved theme on load
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme);
+
+
+    // Scroll Animations
+    const animatedElements = document.querySelectorAll('[data-animate]');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                // Optional: Stop observing after animation triggers once
+                // observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1 // Trigger when 10% of the element is visible
+    });
+    animatedElements.forEach(el => observer.observe(el));
+
+
+    // Form Submission Logic
+    urlForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const baseUrl = baseUrlInput.value.trim();
+        const source = campaignSourceInput.value.trim();
+        const name = campaignNameInput.value.trim();
+        const content = campaignContentInput.value.trim();
+
+        if (!baseUrl) {
+            alert("Please enter a Base URL.");
+            baseUrlInput.focus();
+            return;
+        }
+
+        let outputHTML = '';
+        let hasResults = false;
+
+        // Loop through the medium input elements directly
+        // The key ("Twitter", "LinkedIn") is not used for the label anymore.
+        for (const mediumInput of Object.values(channelMediumInputs)) {
+            const medium = mediumInput.value.trim(); // <<< Get current value from input
+            let fullUrl = '';
+            let errorMsg = null;
+
+            // Only process if the medium input has some value (optional, but good practice)
+            // if (!medium) continue;
+
+            try {
+                const url = new URL(baseUrl);
+                // Add UTM parameters (only if they have a value)
+                if (source) url.searchParams.set('utm_source', source);
+                if (medium) url.searchParams.set('utm_medium', medium);
+                if (name) url.searchParams.set('utm_campaign', name);
+                if (content) url.searchParams.set('utm_content', content);
+                fullUrl = url.toString();
+
+            } catch (error) {
+                 errorMsg = `Error building URL: ${error.message}`;
+                 console.error(`Error building URL for medium "${medium}":`, error);
+            }
+
+            // Generate HTML for this row
+            if (fullUrl) {
+                hasResults = true;
+                // Use the 'medium' variable (input's value) for the label and data-url
+                outputHTML += `
+                  <div class="result-item">
+                    <span>${escapeHTML(medium)}:</span> {/* <<< Label uses input value */}
+                    <input type="text" value="${escapeHTML(fullUrl)}" readonly class="result-url">
+                    <button data-url="${escapeHTML(fullUrl)}" onclick="copySingleUrl(this)">Copy</button>
+                  </div>
+                `;
+            } else if (errorMsg && medium) { // Show error only if medium was entered
+                // Show error message for this specific input if URL building failed
+                outputHTML += `
+                  <div class="result-item">
+                    <span>${escapeHTML(medium)}:</span>
+                    <span style="color: red; font-size: 0.9em; margin-left: 10px;">${escapeHTML(errorMsg)}</span>
+                  </div>`;
+            }
+        } // End loop through medium inputs
+
+        resultsDiv.innerHTML = outputHTML;
+
+        if (hasResults) {
+            copyAllBtn.style.display = 'inline-block'; // Show 'Copy All'
+            resultsHeader.style.display = 'block'; // Show "Generated URLs" header
+             // Ensure results container becomes visible if it wasn't already
+             resultsContainer.classList.add('is-visible');
+        } else {
+            copyAllBtn.style.display = 'none'; // Hide 'Copy All'
+             resultsHeader.style.display = 'none'; // Hide header if no valid results
+             // Don't force results container visible if there's nothing to show
+             if (!outputHTML) { // only hide if there are no errors either
+                resultsContainer.classList.remove('is-visible');
+             }
+        }
+    });
+
+    // Clear Button Logic
+    clearBtn.addEventListener('click', function() {
+        urlForm.reset();
+        resultsDiv.innerHTML = '';
+        copyAllBtn.style.display = 'none';
+        resultsHeader.style.display = 'none';
+        resultsContainer.classList.remove('is-visible'); // Hide results container too
+        baseUrlInput.focus(); // Set focus back to first field
+    });
+
+    // Copy All Button Logic
+    copyAllBtn.addEventListener('click', function() {
+        const urls = Array.from(resultsDiv.querySelectorAll('.result-url'))
+            .map(input => input.value)
+            .join('\n');
+
+        if (!urls) return;
+
+        navigator.clipboard.writeText(urls)
+            .then(() => {
+                showCopyNotification(); // Show feedback
+                const originalText = this.textContent;
+                this.textContent = 'Copied!';
+                this.disabled = true;
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.disabled = false;
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Failed to copy all URLs: ', err);
+                alert('Failed to copy URLs. Please try again or copy manually.');
+            });
+    });
+
+</script>
+
+</body>
+</html>
